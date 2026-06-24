@@ -73,6 +73,18 @@ def test_polish_internet_search_request_classifies_as_web():
     assert "web" in intent["domains"]
 
 
+def test_file_creation_request_classifies_as_files_not_documents():
+    prompt = "\u0441\u043e\u0437\u0434\u0430\u0439 \u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 test.txt \u0438 \u043d\u0430\u043f\u0438\u0448\u0438 \u0442\u0430\u043c \"lol\""
+    intent = _classify_agent_request(
+        [],
+        prompt,
+    )
+
+    assert intent["low_signal"] is False
+    assert "files" in intent["domains"]
+    assert "documents" not in intent["domains"]
+
+
 # ---------------------------------------------------------------------------
 # _detect_admin_intent
 # ---------------------------------------------------------------------------

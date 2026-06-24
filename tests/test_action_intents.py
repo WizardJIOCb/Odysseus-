@@ -37,6 +37,14 @@ def test_note_todo_and_reminder_actions_promote_to_agent():
     assert message_needs_tools("set a reminder to call Pat at 4pm")
 
 
+def test_file_actions_promote_to_file_agent_tools():
+    prompt = "\u0441\u043e\u0437\u0434\u0430\u0439 \u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 test.txt \u0438 \u043d\u0430\u043f\u0438\u0448\u0438 \u0442\u0430\u043c \"lol\""
+    intent = classify_tool_intent(prompt)
+    assert intent.needs_tools
+    assert intent.category == "files"
+    assert message_needs_tools("Create /app/data/projects/test/hello.md with Hello")
+
+
 def test_email_and_ui_actions_promote_to_agent():
     assert message_needs_tools("reply to that email")
     assert message_needs_tools("mark those emails as read")

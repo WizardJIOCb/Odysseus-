@@ -884,6 +884,28 @@ def _classify_agent_request(messages: List[Dict], last_user: str) -> Dict[str, o
     def has(*patterns: str) -> bool:
         return any(re.search(p, q) for p in patterns)
 
+    file_target = (
+        r"(?:(?:file|folder|directory|\u0444\u0430\u0439\u043b|"
+        r"\u043f\u0430\u043f\u043a[\u0430\u0443\u0438\u0435]?|"
+        r"\u043a\u0430\u0442\u0430\u043b\u043e\u0433|"
+        r"\u0434\u0438\u0440\u0435\u043a\u0442\u043e\u0440\u0438[\u044f\u044e\u0438])\b|"
+        r"(?:[~./\\]|[a-z]:[\\/])?[^\s\"'<>|?*]{0,180}\.[a-z0-9]{1,16}\b)"
+    )
+    file_action = (
+        r"(?:create|make|write|save|add|touch|read|show|open|list|edit|update|"
+        r"\u0441\u043e\u0437\u0434\u0430\u0439|\u0441\u043e\u0437\u0434\u0430\u0442\u044c|"
+        r"\u0441\u0434\u0435\u043b\u0430\u0439|\u043d\u0430\u043f\u0438\u0448\u0438|"
+        r"\u0437\u0430\u043f\u0438\u0448\u0438|\u0441\u043e\u0445\u0440\u0430\u043d\u0438|"
+        r"\u043f\u0440\u043e\u0447\u0438\u0442\u0430\u0439|\u043f\u043e\u043a\u0430\u0436\u0438|"
+        r"\u043e\u0442\u043a\u0440\u043e\u0439|\u0432\u044b\u0432\u0435\u0434\u0438|"
+        r"\u043f\u043e\u0441\u043c\u043e\u0442\u0440\u0438|\u0438\u0437\u043c\u0435\u043d[\u044c\u0438]|"
+        r"\u043e\u0431\u043d\u043e\u0432\u0438)"
+    )
+    disk_file_intent = has(
+        rf"\b{file_action}\b.{{0,180}}{file_target}",
+        rf"\b(?:contents?|content|\u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c(?:\u043e\u0435|\u044b\u043c)|\u0447\u0442\u043e\s+(?:\u0432|\u0432\u043d\u0443\u0442\u0440\u0438))\b.{{0,120}}{file_target}",
+    )
+
     if has(r"\b(cookbook|serve|serving|served|launch|start|preset|vllm|sglang|llama\.?cpp|ollama|download|downloading|pull|cached models?|running models?|model servers?|models? (?:are )?running|what models?|model picker|gpu box|kierkegaard|odysseus|ajax|qwen|gemma|llama|mistral|minimax)\b"):
         domains.add("cookbook")
     if has(r"\b(emails?|mails?|gmail|inbox|reply|forward|cc|bcc|send email|compose email|draft email|message chris|message him|message her)\b"):
@@ -894,9 +916,11 @@ def _classify_agent_request(messages: List[Dict], last_user: str) -> Dict[str, o
         domains.add("notes_calendar_tasks")
     if has(r"\b(calendar|event|meeting|appointment|schedule)\b"):
         domains.add("notes_calendar_tasks")
-    if has(r"\b(documents?|docs?|draft|compose|poem|story|essay|outline|letter|edit|rewrite|proofread|suggest|feedback|review this|make a file)\b"):
+    if disk_file_intent:
+        domains.add("files")
+    if not disk_file_intent and has(r"\b(documents?|docs?|draft|compose|poem|story|essay|outline|letter|edit|rewrite|proofread|suggest|feedback|review this|make a file)\b"):
         domains.add("documents")
-    if "notes_calendar_tasks" not in domains and has(r"\bwrite\b"):
+    if "notes_calendar_tasks" not in domains and not disk_file_intent and has(r"\bwrite\b"):
         domains.add("documents")
     if has(r"\b(search|web|google|look up|latest|news|current|weather|forecast|stock price|price of|website|url|https?://|www\.)\b"):
         domains.add("web")

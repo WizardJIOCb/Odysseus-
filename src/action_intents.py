@@ -45,6 +45,23 @@ _PANEL = (
     r"(?:calendar|notes?|inbox|email|mail|documents?|docs|library|gallery|"
     r"settings|cookbook|sessions?|chats?|skills|memories|memory|brain)"
 )
+_FILE_ACTION = (
+    r"(?:create|make|write|save|add|touch|read|show|open|list|edit|update|"
+    r"\u0441\u043e\u0437\u0434\u0430\u0439|\u0441\u043e\u0437\u0434\u0430\u0442\u044c|"
+    r"\u0441\u0434\u0435\u043b\u0430\u0439|\u043d\u0430\u043f\u0438\u0448\u0438|"
+    r"\u0437\u0430\u043f\u0438\u0448\u0438|\u0441\u043e\u0445\u0440\u0430\u043d\u0438|"
+    r"\u043f\u0440\u043e\u0447\u0438\u0442\u0430\u0439|\u043f\u043e\u043a\u0430\u0436\u0438|"
+    r"\u043e\u0442\u043a\u0440\u043e\u0439|\u0432\u044b\u0432\u0435\u0434\u0438|"
+    r"\u043f\u043e\u0441\u043c\u043e\u0442\u0440\u0438|\u0438\u0437\u043c\u0435\u043d[\u044c\u0438]|"
+    r"\u043e\u0431\u043d\u043e\u0432\u0438)"
+)
+_FILE_TARGET = (
+    r"(?:(?:file|folder|directory|\u0444\u0430\u0439\u043b|"
+    r"\u043f\u0430\u043f\u043a[\u0430\u0443\u0438\u0435]?|"
+    r"\u043a\u0430\u0442\u0430\u043b\u043e\u0433|"
+    r"\u0434\u0438\u0440\u0435\u043a\u0442\u043e\u0440\u0438[\u044f\u044e\u0438])\b|"
+    r"(?:[~./\\]|[A-Za-z]:[\\/])?[^\s\"'<>|?*]{0,160}\.[A-Za-z0-9]{1,16}\b)"
+)
 
 _ROUTING_PATTERNS: tuple[tuple[str, str, Pattern[str]], ...] = tuple(
     (category, reason, re.compile(pattern, re.I))
@@ -76,6 +93,12 @@ _ROUTING_PATTERNS: tuple[tuple[str, str, Pattern[str]], ...] = tuple(
         ("notes", "add item to notes/todo request", rf"{_PLEASE}(?:add|jot|write\s+down)\b.{{0,120}}\b(?:to|in|into)\s+(?:my\s+|the\s+)?(?:todo(?:\s+list)?|task\s+list|notes?|checklist)\b"),
         ("notes", "set reminder request", rf"{_PLEASE}set\s+(?:a\s+)?reminder\b"),
         ("notes", "assistant reminder request", rf"{_ACTION_QUESTION}set\s+(?:a\s+)?reminder\b"),
+
+        # Real disk file actions. These should route to file tools, not the
+        # in-app document editor.
+        ("files", "file action request", rf"{_PLEASE}{_FILE_ACTION}\b.{{0,180}}{_FILE_TARGET}"),
+        ("files", "assistant file action request", rf"{_ACTION_QUESTION}{_FILE_ACTION}\b.{{0,180}}{_FILE_TARGET}"),
+        ("files", "file content lookup request", rf"\b(?:contents?|content|\u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c(?:\u043e\u0435|\u044b\u043c)|\u0447\u0442\u043e\s+(?:\u0432|\u0432\u043d\u0443\u0442\u0440\u0438))\b.{{0,120}}{_FILE_TARGET}"),
 
         # Email actions.
         ("email", "assistant email action request", rf"{_ACTION_QUESTION}(?:send|write|reply|email|message|archive|delete|mark)\b.{{0,120}}\b(?:emails?|mail|messages?|inbox|unread|read)\b"),
